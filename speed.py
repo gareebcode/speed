@@ -2,9 +2,9 @@ import asyncio
 from pyrogram import Client, filters
 
 # Replace with your credentials
-API_ID = "YOUR_API_ID"
-API_HASH = "YOUR_API_HASH"
-STRING = 'STRING'
+API_ID = "23037009"
+API_HASH = "9a214f65832749215b9532cdb3df73b9"
+STRING = 'BQFfhFEAsYi7gsp4rYQc8RBaw6zfmaze-_Osanxrb86mDeKlN8hImJvrHqkVwIWFXe1k1u5LnnxxwsB0tIjaexfNoHDz2uvYagUmXPMgdl1kjn7ds6sCmuX4OHP2kWJPnqpxK3JvzcFfWjCVhA3pMwUritf2RuZDYISQWzz23avzcOVGGfKmi1vX7hG90Jy7xBVjpTmMFXTXAacdoP2j05pk9uHH_qboM0OMFpQ2M777ycwmN_Dzf0wMuW_qq4nestKNLlGvkIgKPXFi-jgy0RA50XTiEnP8kWZydZxfRbyneHSJ-wZam5hS-3qycKKxj6OIt7onwzC5o6r1jVq-5mo9uQ1_kgAAAAGPgXiWAA'
 
 app = Client("my_bot", api_id=API_ID, api_hash=API_HASH, 
 session_string=STRING)
