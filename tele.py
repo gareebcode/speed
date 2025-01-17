@@ -7,7 +7,8 @@ import os
 # Replace these with your own values
 API_ID = '19748984'
 API_HASH = '2141e30f96dfbd8c46fbb5ff4b197004'
-SESSION_STRING = "SESSION"
+SESSION_STRING = "1BVtsOG8BuxskcX5JneBQhJZBazCYc3y-yZn0IE7ZjNz4KH9E8R817Qzttw-Wjh4P1nSRAbcN2icb-BRDhFcm2JKR12kk7xlFSwEKE_T7T3_QV4i_GQB6bOXGFD_nd7aBzQUSWGZV4t21fujl03zOjDrW8v6UGA_4SG1VJ6fbji9ChlgWOV43k3_oc7gkJMGvniShqXh5z5i8JLzCsWe4u0WVkR09rhfd2PEM9hb7UlBCehs0de2UC4X5bG8qULlym3scqctkKVLh0rVNkIlTn3tAWqTzGJr6dRN5UzUkAavUNIDz2MgNqc11zUO0nK0uduoEkc2wRsUMWPsT_2WLl_u3E8jy9_M=
+"
 
 # Directory to store downloaded files
 DOWNLOAD_DIR = "downloads"
