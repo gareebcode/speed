@@ -3,12 +3,12 @@ from telethon.tl.types import Message
 from telethon.sessions import StringSession
 from FastTelethonhelper import fast_download
 import os
+import time
 
 # Replace these with your own values
 API_ID = '19748984'
 API_HASH = '2141e30f96dfbd8c46fbb5ff4b197004'
-SESSION_STRING = "1BVtsOG8BuxskcX5JneBQhJZBazCYc3y-yZn0IE7ZjNz4KH9E8R817Qzttw-Wjh4P1nSRAbcN2icb-BRDhFcm2JKR12kk7xlFSwEKE_T7T3_QV4i_GQB6bOXGFD_nd7aBzQUSWGZV4t21fujl03zOjDrW8v6UGA_4SG1VJ6fbji9ChlgWOV43k3_oc7gkJMGvniShqXh5z5i8JLzCsWe4u0WVkR09rhfd2PEM9hb7UlBCehs0de2UC4X5bG8qULlym3scqctkKVLh0rVNkIlTn3tAWqTzGJr6dRN5UzUkAavUNIDz2MgNqc11zUO0nK0uduoEkc2wRsUMWPsT_2WLl_u3E8jy9_M=
-"
+SESSION_STRING = "SESSION"
 
 # Directory to store downloaded files
 DOWNLOAD_DIR = "downloads"
@@ -29,6 +29,69 @@ def progress_bar_str(downloaded_bytes, total_bytes):
     bar = "█" * filled_length + "-" * (bar_length - filled_length)
     return f"[{bar}] {percent:.2f}% ({downloaded_bytes}/{total_bytes})"
 
+user_progress = {}
+
+def progress_callback(done, total, user_id):
+    # Check if this user already has progress tracking
+    if user_id not in user_progress:
+        user_progress[user_id] = {
+            'previous_done': 0,
+            'previous_time': time.time()
+        }
+    
+    # Retrieve the user's tracking data
+    user_data = user_progress[user_id]
+    
+    # Calculate the percentage of progress
+    percent = (done / total) * 100
+    
+    # Format the progress bar
+    completed_blocks = int(percent // 10)
+    remaining_blocks = 10 - completed_blocks
+    progress_bar = "♦" * completed_blocks + "◇" * remaining_blocks
+    
+    # Convert done and total to MB for easier reading
+    done_mb = done / (1024 * 1024)  # Convert bytes to MB
+    total_mb = total / (1024 * 1024)
+    
+    # Calculate the upload speed (in bytes per second)
+    speed = done - user_data['previous_done']
+    elapsed_time = time.time() - user_data['previous_time']
+    
+    if elapsed_time > 0:
+        speed_bps = speed / elapsed_time  # Speed in bytes per second
+        speed_mbps = (speed_bps * 8) / (1024 * 1024)  # Speed in Mbps
+    else:
+        speed_mbps = 0
+    
+    # Estimated time remaining (in seconds)
+    if speed_bps > 0:
+        remaining_time = (total - done) / speed_bps
+    else:
+        remaining_time = 0
+    
+    # Convert remaining time to minutes
+    remaining_time_min = remaining_time / 60
+    
+    # Format the final output as needed
+    final = (
+        f"╭──────────────────╮\n"
+        f"│     **__SpyLib ⚡ Uploader__**       \n"
+        f"├──────────\n"
+        f"│ {progress_bar}\n\n"
+        f"│ **__Progress:__** {percent:.2f}%\n"
+        f"│ **__Done:__** {done_mb:.2f} MB / {total_mb:.2f} MB\n"
+        f"│ **__Speed:__** {speed_mbps:.2f} Mbps\n"
+        f"│ **__ETA:__** {remaining_time_min:.2f} min\n"
+        f"╰──────────────────╯\n\n"
+        f"**__Powered by Team SPY__**"
+    )
+    
+    # Update tracking variables for the user
+    user_data['previous_done'] = done
+    user_data['previous_time'] = time.time()
+    
+    return final
 
 @client.on(events.NewMessage(pattern="/get_message"))
 async def get_message_handler(event):
@@ -36,6 +99,8 @@ async def get_message_handler(event):
     Handles the /get_message command to fetch and download a message by ID.
     Command format: /get_message <chat_id> <message_id>
     """
+    sender = event.sender_id
+
     try:
         # Parse command arguments
         command = event.raw_text.split()
@@ -69,7 +134,7 @@ async def get_message_handler(event):
             message,
             reply=progress_message,
             download_folder=DOWNLOAD_DIR,
-            progress_bar_function=progress_bar_str,
+            progress_bar_function=lambda done, total: progress_callback(done, total, sender),
         )
 
         # Notify completion
