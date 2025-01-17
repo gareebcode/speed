@@ -1,89 +1,59 @@
-from telethon import TelegramClient, events
-from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, PhoneCodeInvalidError
-import os
+from telethon.sync import TelegramClient
+from telethon.errors import (
+    SessionPasswordNeededError,
+    PhoneCodeInvalidError,
+    PhoneNumberInvalidError,
+    PasswordHashInvalidError,
+)
+from telethon.sessions import StringSession
 
-# Default API credentials
-DEFAULT_API_ID = 19748984  # Replace with your default API ID
-DEFAULT_API_HASH = "2141e30f96dfbd8c46fbb5ff4b197004"  # Replace with your default API HASH
-BOT_TOKEN = "7326914757:AAGukO4Yx1LPV9eTZ69oIun1y-SlMDmo7yI"
 
-# Create a bot client
-bot = TelegramClient("bot", DEFAULT_API_ID, DEFAULT_API_HASH).start(bot_token=BOT_TOKEN)
+def generate_session():
+    print("Welcome to Telegram String Session Generator!\n")
 
-# Temporary data storage for user sessions
-user_sessions = {}
+    # Step 1: Input API credentials
+    api_id = input("Enter your API ID: ").strip()
+    api_hash = input("Enter your API Hash: ").strip()
 
-# Start command handler
-@bot.on(events.NewMessage(pattern="/start"))
-async def start(event):
-    user_id = event.sender_id
-    user_sessions.pop(user_id, None)  # Clear previous session data
-    await event.reply(
-        "Welcome to the Session String Generator bot! Send your phone number in the format:\n\n`+1234567890`"
-    )
+    # Initialize client
+    client = TelegramClient(StringSession(), api_id, api_hash)
 
-# Generic message handler
-@bot.on(events.NewMessage)
-async def handle_message(event):
-    user_id = event.sender_id
-    user_message = event.text.strip()
+    # Step 2: Input phone number
+    phone_number = input("\nEnter your phone number (with country code): ").strip()
 
-    # Handle phone number input
-    if user_id not in user_sessions:
-        if not user_message.startswith("+"):
-            return await event.reply("Invalid phone number format! Please use: `+1234567890`")
+    try:
+        # Connect to Telegram
+        client.connect()
+        if not client.is_user_authorized():
+            # Send OTP
+            print("\nSending OTP to your phone...")
+            client.send_code_request(phone_number)
 
-        # Start login process
-        user_sessions[user_id] = {"phone": user_message}
-        client = TelegramClient(f"session_{user_id}", DEFAULT_API_ID, DEFAULT_API_HASH)
-        user_sessions[user_id]["client"] = client
+            # Step 3: Input OTP
+            otp = input("\nEnter the OTP you received (e.g., '1 2 3 4 5'): ").strip().replace(" ", "")
+            try:
+                client.sign_in(phone_number, otp)
+            except SessionPasswordNeededError:
+                # Step 4: Handle two-step verification
+                password = input("\nTwo-step verification is enabled. Enter your password: ").strip()
+                try:
+                    client.sign_in(password=password)
+                except PasswordHashInvalidError:
+                    print("\nInvalid password. Please try again.")
+                    return
+            except PhoneCodeInvalidError:
+                print("\nInvalid OTP. Please try again.")
+                return
+        # Generate session string
+        session_string = client.session.save()
+        print("\nYour String Session:")
+        print(session_string)
+        print("\nKeep this string session safe! Do not share it with anyone.")
+    except PhoneNumberInvalidError:
+        print("\nInvalid phone number. Please check and try again.")
+    finally:
+        client.disconnect()
 
-        try:
-            await client.connect()
-            await client.send_code_request(user_message)
-            await event.reply("Code sent to your phone. Reply with the code. Send with spaces")
-        except PhoneNumberInvalidError:
-            user_sessions.pop(user_id, None)
-            await event.reply("Invalid phone number! Restart with /start.")
-        return
 
-    # Handle code input
-    session_data = user_sessions.get(user_id)
-    if session_data and "code" not in session_data:
-        try:
-            code = user_message.replace(" ", "")
-            client = session_data["client"]
-            await client.sign_in(session_data["phone"], code)
-            session_string = client.session.save()
-            await event.reply(f"Login successful! Here is your session string:\n\n`{session_string}`\n\nKeep it secure!")
-            await client.disconnect()
-            user_sessions.pop(user_id, None)
-        except PhoneCodeInvalidError:
-            await event.reply("Invalid code! Please try again.")
-        except SessionPasswordNeededError:
-            session_data["code"] = code
-            await event.reply("Two-step verification enabled. Send your password (separate words by spaces if applicable).")
-        return
-
-    # Handle two-step password
-    if session_data and "password" not in session_data:
-        try:
-            # Remove spaces from password
-            password = user_message.replace(" ", "")
-            client = session_data["client"]
-            await client.sign_in(password=password)
-            session_string = client.session.save()
-            await event.reply(f"Login successful! Here is your session string:\n\n`{session_string}`\n\nKeep it secure!")
-            await client.disconnect()
-            user_sessions.pop(user_id, None)
-        except Exception as e:
-            await event.reply(f"Error during password authentication! Restart with /start.\n\nDetails: {e}")
-            user_sessions.pop(user_id, None)
-        return
-
-    # Fallback for unrecognized input
-    await event.reply("Invalid input! Restart with /start.")
-
-# Start the bot
-print("Bot is running...")
-bot.run_until_disconnected()
+if __name__ == "__main__":
+    generate_session()
