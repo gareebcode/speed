@@ -3,7 +3,7 @@ import asyncio
 
 API_ID = "23037009"
 API_HASH = "9a214f65832749215b9532cdb3df73b9"
-BOT_TOKEN = "7671721522:AAGZVMjDs267tlHjMIfeJHoKPzgJPHgNjQM"
+BOT_TOKEN = "7671721522:AAGZVMjDsgJPHgNjQM"
 
 app = Client("my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
